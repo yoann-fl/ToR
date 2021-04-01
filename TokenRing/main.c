@@ -41,6 +41,7 @@ osMessageQueueId_t  queue_timeS_id;
 osMessageQueueId_t  queue_lcd_id;
 osMessageQueueId_t  queue_keyboard_id;
 osMessageQueueId_t  queue_usartR_id;
+osMessageQueueId_t  queue_macSBuffer_id;
 const osMessageQueueAttr_t queue_macR_attr = {
 	.name = "MAC_RECEIVER"  	
 };
