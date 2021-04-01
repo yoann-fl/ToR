@@ -45,8 +45,8 @@ extern osMessageQueueId_t	queue_macS_id;
 extern osMessageQueueId_t  queue_chatR_id;
 extern osMessageQueueId_t  queue_timeR_id;
 extern osMessageQueueId_t  queue_lcd_id;
-extern osMessageQueueId_t  queue_timeS_id;
-extern osMessageQueueId_t  queue_chatS_id;
+extern osMessageQueueId_t  queue_macSBuffer_id; // Buffer to store pointer of messages
+extern osMessageQueueId_t  queue_chatS_id; // "Rien à faire là"
 extern osMessageQueueId_t  queue_keyboard_id;
 extern osMessageQueueId_t  queue_usartR_id;
 extern osEventFlagsId_t  	eventFlag_id;
@@ -104,7 +104,8 @@ enum msgType_e
 	CHAR_MSG,								///< a single char is sent to the LCD
 	CHAT_MSG,								///< a chat message is sent to the LCD
 	FROM_PHY,								///< a message arriving from physical layer
-	TO_PHY									///< a message sent to physical layer
+	TO_PHY,									///< a message sent to physical layer
+	TO_BUFF									///< a message sent to MAC Sender's buffer
 };
 
 //--------------------------------------------------------------------------------
