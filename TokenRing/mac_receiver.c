@@ -50,18 +50,47 @@ void MacReceiver(void *argument)
 					0);
 			CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);				
 		}
-		
-		//------------------------------------------------------------------------
-		// QUEUE SEND	(send received frame to physical receiver)
-		//------------------------------------------------------------------------
-		/*queueMsg.type = TO_PHY;
-		queueMsg.anyPtr = tokenFrameBuffer;
-		retCode = osMessageQueuePut(
-				queue_phyS_id,
-				&queueMsg,
-				osPriorityNormal,
-				0);
-		CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);		*/								
+		else //Frame is a data
+		{
+			//------------------------------------------------------------------------
+			// QUEUE PHYs SEND	(send ptr on received frame to PHY Sender)
+			//------------------------------------------------------------------------
+			queueMsg.type = TO_PHY;
+			queueMsg.anyPtr = qPtr;
+			retCode = osMessageQueuePut(
+					queue_phyS_id,
+					&queueMsg,
+					osPriorityNormal,
+					0);
+			CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);		
+			//----------------------------------------------------------------------------
+			
+			uint8_t addressRead;
+			uint8_t sapiRead;			
+			
+			sapiRead = qPtr[0] & 7; //binary to keep only the 3 LSB which define the SAPI
+			addressRead = qPtr[0] & 120; //binary to keep the address bits
+			//------------------------------------------------------------------------
+			// QUEUE CHATr & TIMEr SEND	
+			//------------------------------------------------------------------------
+			queueMsg.type = DATA_IND;
+			queueMsg.anyPtr = qPtr;
+			queueMsg.addr = addressRead;
+			queueMsg.sapi = sapiRead;
+			retCode = osMessageQueuePut(
+					queue_chatR_id,
+					&queueMsg,
+					osPriorityNormal,
+					0);
+			CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);	
+			retCode = osMessageQueuePut(
+					queue_timeR_id,
+					&queueMsg,
+					osPriorityNormal,
+					0);
+			CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);		
+			//-------------------------------------------------------------------------
+		}			
 	}
 }
 
