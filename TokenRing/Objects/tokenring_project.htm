@@ -3,15 +3,7 @@
 <title>Static Call Graph - [.\Objects\tokenring_project.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\tokenring_project.axf</H1><HR>
-<<<<<<< HEAD
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Fri Apr 09 01:48:10 2021
-=======
-<<<<<<< HEAD
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Thu Apr 01 14:28:01 2021
-=======
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Thu Apr 01 13:57:15 2021
->>>>>>> a6cbf31b5db5594f9e0f1777ea1c93d2f85b3cfd
->>>>>>> main
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Fri Apr 09 02:28:52 2021
 <BR><P>
 <H3>Maximum Stack Usage =        576 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -2973,10 +2965,10 @@ Global Symbols
 <P><STRONG><a name="[202]"></a>HAL_UART_Init</STRONG> (Thumb, 116 bytes, Stack size 8 bytes, stm32f7xx_hal_uart.o(i.HAL_UART_Init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = HAL_UART_Init &rArr; UART_CheckIdleState &rArr; UART_WaitOnFlagUntilTimeout &rArr; HAL_GetTick &rArr; osKernelGetTickCount &rArr; svcRtxKernelGetTickCount &rArr; EvrRtxKernelGetTickCount &rArr; EventRecord2 &rArr; EventRecordItem
 </UL>
-<BR>[Calls]<UL><LI><a href="#[232]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_SetConfig
+<BR>[Calls]<UL><LI><a href="#[231]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_MspInit
+<LI><a href="#[232]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_SetConfig
 <LI><a href="#[234]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_CheckIdleState
 <LI><a href="#[233]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_AdvFeatureConfig
-<LI><a href="#[231]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_MspInit
 </UL>
 <BR>[Called By]<UL><LI><a href="#[201]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Ext_UART_Init
 </UL>
@@ -5131,6 +5123,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_acquire
 <LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGClear
 <LI><a href="#[24e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGFillArea
+<LI><a href="#[de]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_gdispInitDriver
+<LI><a href="#[e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_gdispDeInitDriver
 <LI><a href="#[2b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGSetClip
 <LI><a href="#[2b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGFlush
 <LI><a href="#[2f7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGFillStringBox
@@ -5143,8 +5137,6 @@ Global Symbols
 <LI><a href="#[2eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGDrawBox
 <LI><a href="#[2b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGControl
 <LI><a href="#[2ea]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGBlitArea
-<LI><a href="#[de]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_gdispInitDriver
-<LI><a href="#[e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_gdispDeInitDriver
 <LI><a href="#[280]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;geventSendEvent
 <LI><a href="#[2c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;geventRegisterCallback
 <LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;geventGetSourceListener
@@ -5185,6 +5177,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[114]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_release
 <LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGClear
 <LI><a href="#[24e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGFillArea
+<LI><a href="#[de]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_gdispInitDriver
+<LI><a href="#[e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_gdispDeInitDriver
 <LI><a href="#[2b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGSetClip
 <LI><a href="#[2b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGFlush
 <LI><a href="#[2f7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGFillStringBox
@@ -5197,8 +5191,6 @@ Global Symbols
 <LI><a href="#[2eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGDrawBox
 <LI><a href="#[2b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGControl
 <LI><a href="#[2ea]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gdispGBlitArea
-<LI><a href="#[de]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_gdispInitDriver
-<LI><a href="#[e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_gdispDeInitDriver
 <LI><a href="#[280]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;geventSendEvent
 <LI><a href="#[2c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;geventRegisterCallback
 <LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;geventGetSourceListener
