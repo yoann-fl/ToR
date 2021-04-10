@@ -65,7 +65,7 @@ void MacSender(void *argument)
 				gTokenInterface.station_list[i-1] = qPtr[i];
 			}
 			qPtr[MYADDRESS] = 10;		// Chat and time are ON
-			queueAllMsg.anyPtr = qPtr;
+			queueAllMsg.anyPtr = qPtr;  //pk?
 		}
 		// Manage START Type
 		else if(queueAllMsg.type == START)
@@ -82,12 +82,13 @@ void MacSender(void *argument)
 		}
 		
 		// Put in the buffer if a message was get from the queue is not a Token data back or new token
-		if((retCodeToken == osOK) && !(queueAllMsg.type == NEW_TOKEN || queueAllMsg.type == DATABACK))
+		if((retCodeToken == osOK) && !(queueAllMsg.type == NEW_TOKEN || queueAllMsg.type == DATABACK))  
 		{
 			//------------------------------------------------------------------------
 			// QUEUE SEND	(send received frame to MAC sender's buffer)
 			//------------------------------------------------------------------------
 			queueMsgBuffer.type = TO_BUFF;
+			//queueMsgBuffer.anyPtr = queueAllMsg.anyPtr;  oui/non????
 			retCodeBuffer = osMessageQueuePut(
 				queue_macSBuffer_id,
 				&queueMsgBuffer,
@@ -106,7 +107,7 @@ void MacSender(void *argument)
 				NULL,
 				osWaitForever); 	
 			CheckRetCode(retCodeToken,__LINE__,__FILE__,CONTINUE);				
-			bPtr = queueMsgBuffer.anyPtr;
+			bPtr = queueMsgBuffer.anyPtr; //on fait quoi de bPtr ?
 			
 			//------------------------------------------------------------------------
 			// QUEUE SEND	(send received frame to physical sender)
