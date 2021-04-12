@@ -153,14 +153,51 @@ void MacSender(void *argument)
 				//------------------------------------------------------------------------
 				// QUEUE SEND	-- send the token again
 				//------------------------------------------------------------------------
-				queueAllMsg.anyPtr = tPtr;
-				queueAllMsg.type = TO_PHY;
-				retCode = osMessageQueuePut(
-					queue_phyS_id,
-					&queueAllMsg,
-					osPriorityNormal,
-					osWaitForever);
-				CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+			
+				// is Field source addr = Station_addr ? 
+				if(queueAllMsg.addr == gTokenInterface.myAddress)
+				{
+					uint8_t dataFrameLength = queueAllMsg.anyPtr[2];
+					// is R bit = 1 ?
+					if(queueAllMsg.anyPtr[3+dataFrameLength] & 2 == 2)
+					{
+						// is A bit = 1 ?
+						if(queueAllMsg.anyPtr[3+dataFrameLength] & 1 == 1)
+						{
+							// Send Token
+							queueAllMsg.anyPtr = tPtr;
+							queueAllMsg.type = TO_PHY;
+							retCode = osMessageQueuePut(
+								queue_phyS_id,
+								&queueAllMsg,
+								osPriorityNormal,
+								osWaitForever);
+							CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+						}
+						else
+						{
+							// TO DO queueAllMsg.anyPtr[3+dataFrameLength] = queueAllMsg.anyPtr[3+dataFrameLength] | // Ack = 0, Read = 0;
+							// Send Data
+							queueAllMsg.type = TO_BUFF;
+							retCode = osMessageQueuePut(
+								queue_phyS_id,
+								&queue_macSBuffer_id,
+								osPriorityNormal,
+								osWaitForever);
+							CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+						}
+					}
+					else
+					{
+						queueAllMsg.type = MAC_ERROR;
+							retCode = osMessageQueuePut(
+								queue_lcd_id,
+								&queueAllMsg,
+								osPriorityNormal,
+								osWaitForever);
+							CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+					}
+				}
 				break;
 			case DATA_IND:
 				//------------------------------------------------------------------------
