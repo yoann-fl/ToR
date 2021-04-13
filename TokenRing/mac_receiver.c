@@ -6,15 +6,9 @@
 /// \date  2018-02
 //////////////////////////////////////////////////////////////////////////////////
 #include "stm32f7xx_hal.h"
-
- 
-
 #include <stdio.h>
 #include <string.h>
 #include "main.h"
-
- 
-
 
 //////////////////////////////////////////////////////////////////////////////////
 // THREAD MAC RECEIVER
@@ -41,7 +35,7 @@ void MacReceiver(void *argument)
             &queueMsg,
             NULL,
             osWaitForever);     
-    CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);                
+				CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);                
         qPtr = queueMsg.anyPtr;
         
         if(qPtr[0] == TOKEN_TAG)
@@ -49,7 +43,7 @@ void MacReceiver(void *argument)
             //------------------------------------------------------------------------
             // QUEUE SEND    (send received frame to Mac Sender)
             //------------------------------------------------------------------------
-            queueMsg.type = DATABACK;
+            queueMsg.type = TOKEN;
             queueMsg.anyPtr = qPtr;
             retCode = osMessageQueuePut(
                     queue_macS_id,
@@ -65,11 +59,15 @@ void MacReceiver(void *argument)
             sapiDest = qPtr[1] & 7; //binary to keep only the 3 LSB which define the SAPI
             addressDest = qPtr[1] & 120; //binary to keep the address bits
             
-            if(addressSource == gTokenInterface.myAddress){
-                //DATABACK
-                
-                //------------------------------------------------------------------------
-                // QUEUE PHYs SEND    (send ptr on received frame to PHY Sender)
+            if(addressDest == gTokenInterface.myAddress){
+              if((dataFrame[2+dataLength]&0xFC)>>2 == doChecksum(dataFrame+3,dataFrame[2]))
+							{	
+								dataFrame[2+dataLength] = dataFrame[2+dataLength]|3;	//ack bit = 1	read bit = 1
+								
+								if(addressSource == gTokenInterface.myAddress){
+									//send DataBack
+								//------------------------------------------------------------------------
+                // QUEUE PHYs SEND    (send ptr on received frame to MAC Sender)
                 //------------------------------------------------------------------------
                 queueMsg.type = DATABACK;
                 queueMsg.anyPtr = qPtr;
@@ -81,60 +79,85 @@ void MacReceiver(void *argument)
                         osPriorityNormal,
                         0);
                 CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);        
-                //----------------------------------------------------------------------------
-            
-                
+                //----------------------------------------------------------------------------  
+								}
+								else{
+								//------------------------------------------------------------------------
+								// QUEUE CHATr & TIMEr SEND    
+								//------------------------------------------------------------------------
+								queueMsg.type = DATA_IND;
+								queueMsg.anyPtr = qPtr;
+								queueMsg.addr = addressSource;
+								queueMsg.sapi = sapiSource;
+								retCode = osMessageQueuePut(
+												queue_chatR_id,
+												&queueMsg,
+												osPriorityNormal,
+												0);
+								CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);    
+								retCode = osMessageQueuePut(
+												queue_timeR_id,
+												&queueMsg,
+												osPriorityNormal,
+												0);
+								CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);        
+								//-------------------------------------------------------------------------
+								}
+							}
+							else
+							{ //checksum is wrong
+								//ACK bit = 0
+								//READ bit = 1
+								dataFrame[2+dataLength] = dataFrame[2+dataLength]|2;	//ack bit = 1	
+								if(addressSource == gTokenInterface.myAddress){
+									//send DataBack
+									//------------------------------------------------------------------------
+									// QUEUE PHYs SEND    (send ptr on received frame to MAC Sender)
+									//------------------------------------------------------------------------
+									queueMsg.type = DATABACK;
+									queueMsg.anyPtr = qPtr;
+									queueMsg.sapi = sapiSource;
+									queueMsg.sapi = addressSource;
+									retCode = osMessageQueuePut(
+													queue_macS_id,
+													&queueMsg,
+													osPriorityNormal,
+													0);
+									CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);        
+									//----------------------------------------------------------------------------
+								}
+								else{
+									//-------------------------------------------------------------------------
+									// QUEUE PHYs SEND    (send ptr on received frame to PHY Sender)
+									//------------------------------------------------------------------------
+									queueMsg.type = TO_PHY;
+									queueMsg.anyPtr = qPtr;
+									retCode = osMessageQueuePut(
+													queue_phyS_id,
+													&queueMsg,
+													osPriorityNormal,
+													0);
+									CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);        
+									//----------------------------------------------------------------------------
+								}
+							}
             }
-            else if(addressDest == gTokenInterface.myAddress){
-                
-            //read bit = 1
-            //qPtr[4] = qPtr[4] or 2;
-            qPtr[4] = qPtr[4] | 2;
-            //------------------------------------------------------------------------
-            // QUEUE PHYs SEND    (send ptr on received frame to PHY Sender)
-            //------------------------------------------------------------------------
-            queueMsg.type = TO_PHY;
-            queueMsg.anyPtr = qPtr;
-            retCode = osMessageQueuePut(
-                    queue_phyS_id,
-                    &queueMsg,
-                    osPriorityNormal,
-                    0);
-            CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);        
-            //----------------------------------------------------------------------------
-                
-
- 
-
-            //------------------------------------------------------------------------
-            // QUEUE CHATr & TIMEr SEND    
-            //------------------------------------------------------------------------
-            queueMsg.type = DATA_IND;
-            queueMsg.anyPtr = qPtr;
-            queueMsg.addr = addressSource;
-            queueMsg.sapi = sapiSource;
-            retCode = osMessageQueuePut(
-                    queue_chatR_id,
-                    &queueMsg,
-                    osPriorityNormal,
-                    0);
-            CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);    
-            retCode = osMessageQueuePut(
-                    queue_timeR_id,
-                    &queueMsg,
-                    osPriorityNormal,
-                    0);
-            CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);        
-            //-------------------------------------------------------------------------
-            
-            //check le checksum
-            
-            //ACK bit = 1 
-            qPtr[4] = qPtr[4] | 1;
-
- 
-
-            }
+            else{	//TO_PHY , message is not for us
+														
+							//------------------------------------------------------------------------
+							// QUEUE PHYs SEND    (send ptr on received frame to PHY Sender)
+							//------------------------------------------------------------------------
+							queueMsg.type = TO_PHY;
+							queueMsg.anyPtr = qPtr;
+							retCode = osMessageQueuePut(
+											queue_phyS_id,
+											&queueMsg,
+											osPriorityNormal,
+											0);
+							CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);        
+							//----------------------------------------------------------------------------
+						}						
         }            
     }
 }
+
