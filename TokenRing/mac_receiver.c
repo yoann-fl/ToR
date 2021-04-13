@@ -20,6 +20,7 @@ void MacReceiver(void *argument)
     uint8_t addressSource;
     uint8_t sapiSource;    
     uint8_t addressDest;
+		uint32_t dataLength;
     uint8_t sapiDest;
     uint8_t * msg;
     uint8_t * qPtr;
@@ -58,11 +59,11 @@ void MacReceiver(void *argument)
             addressSource = qPtr[0] & 120; //binary to keep the address bits
             sapiDest = qPtr[1] & 7; //binary to keep only the 3 LSB which define the SAPI
             addressDest = qPtr[1] & 120; //binary to keep the address bits
-            
+            dataLength = qPtr[2];
             if(addressDest == gTokenInterface.myAddress){
-              if((dataFrame[2+dataLength]&0xFC)>>2 == doChecksum(dataFrame+3,dataFrame[2]))
+              if((qPtr[2+dataLength]&0xFC)>>2 == doChecksum(qPtr+3,qPtr[2]))
 							{	
-								dataFrame[2+dataLength] = dataFrame[2+dataLength]|3;	//ack bit = 1	read bit = 1
+								qPtr[2+dataLength] = qPtr[2+dataLength]|3;	//ack bit = 1	read bit = 1
 								
 								if(addressSource == gTokenInterface.myAddress){
 									//send DataBack
@@ -108,7 +109,7 @@ void MacReceiver(void *argument)
 							{ //checksum is wrong
 								//ACK bit = 0
 								//READ bit = 1
-								dataFrame[2+dataLength] = dataFrame[2+dataLength]|2;	//ack bit = 1	
+								qPtr[2+dataLength] = qPtr[2+dataLength]|2;	//ack bit = 1	
 								if(addressSource == gTokenInterface.myAddress){
 									//send DataBack
 									//------------------------------------------------------------------------
@@ -142,8 +143,7 @@ void MacReceiver(void *argument)
 								}
 							}
             }
-            else{	//TO_PHY , message is not for us
-														
+            else{	//TO_PHY , message is not for us														
 							//------------------------------------------------------------------------
 							// QUEUE PHYs SEND    (send ptr on received frame to PHY Sender)
 							//------------------------------------------------------------------------
