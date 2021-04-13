@@ -21,12 +21,15 @@ void MacSender(void *argument)
 	struct queueMsg_t queueAllMsg;			// queue message token
 	struct queueMsg_t queueMsgBuffer;		// queue message storage
 	struct queueMsg_t msgList;					// queue meesage list to LCD
+	uint8_t * dataFramePtr = queueAllMsg.anyPtr;
+	uint8_t dataFrameLength = dataFramePtr[2];
 	uint8_t tokenFrameBuffer[17];				// Token frame buffer
 	uint8_t * msg;
+	
 	uint8_t * qPtr;
 	uint8_t * bPtr;
 	uint8_t * tPtr = 0;
-	size_t	size;
+	size_t	strLength;
 	osStatus_t retCode;
 	bool_t isListChanged;
 	
@@ -153,58 +156,78 @@ void MacSender(void *argument)
 				//------------------------------------------------------------------------
 				// QUEUE SEND	-- send the token again
 				//------------------------------------------------------------------------
-			
-				// is Field source addr = Station_addr ? 
-				if(queueAllMsg.addr == gTokenInterface.myAddress)
+
+				// is R bit = 1 ?
+				if(dataFramePtr[3+dataFrameLength] & 2 == 2)
 				{
-					uint8_t dataFrameLength = queueAllMsg.anyPtr[2];
-					// is R bit = 1 ?
-					if(queueAllMsg.anyPtr[3+dataFrameLength] & 2 == 2)
+					// is A bit = 1 ?
+					if(dataFramePtr[3+dataFrameLength] & 1 == 1)
 					{
-						// is A bit = 1 ?
-						if(queueAllMsg.anyPtr[3+dataFrameLength] & 1 == 1)
-						{
-							// Send Token
-							queueAllMsg.anyPtr = tPtr;
-							queueAllMsg.type = TO_PHY;
-							retCode = osMessageQueuePut(
-								queue_phyS_id,
-								&queueAllMsg,
-								osPriorityNormal,
-								osWaitForever);
-							CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
-						}
-						else
-						{
-							// TO DO queueAllMsg.anyPtr[3+dataFrameLength] = queueAllMsg.anyPtr[3+dataFrameLength] | // Ack = 0, Read = 0;
-							// Send Data
-							queueAllMsg.type = TO_BUFF;
-							retCode = osMessageQueuePut(
-								queue_phyS_id,
-								&queue_macSBuffer_id,
-								osPriorityNormal,
-								osWaitForever);
-							CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
-						}
+						// Send Token
+						queueAllMsg.anyPtr = tPtr;
+						queueAllMsg.type = TO_PHY;
+						retCode = osMessageQueuePut(
+							queue_phyS_id,
+							&queueAllMsg,
+							osPriorityNormal,
+							osWaitForever);
+						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
 					}
 					else
 					{
-						queueAllMsg.type = MAC_ERROR;
-							retCode = osMessageQueuePut(
-								queue_lcd_id,
-								&queueAllMsg,
-								osPriorityNormal,
-								osWaitForever);
-							CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+						// Set R & A to 0
+						uint8_t newStatus = dataFramePtr[3+dataFrameLength] & 0xFC;
+						
+						dataFramePtr[3+dataFrameLength] = newStatus; 		// Ack = 0, Read = 0;
+						// Send Data
+						queueAllMsg.type = TO_BUFF;
+						retCode = osMessageQueuePut(
+							queue_phyS_id,
+							&queue_macSBuffer_id,
+							osPriorityNormal,
+							osWaitForever);
+						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
 					}
 				}
+				else
+				{
+					queueAllMsg.type = MAC_ERROR;
+					queueAllMsg.anyPtr = "Message was not read";
+					queueAllMsg.addr = gTokenInterface.myAddress;
+						retCode = osMessageQueuePut(
+							queue_lcd_id,
+							&queueAllMsg,
+							osPriorityNormal,
+							osWaitForever);
+						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+				}
+				
 				break;
 			case DATA_IND:
 				//------------------------------------------------------------------------
 				// DataBuffer SEND    -- send the Data in the waiting queue
 				//------------------------------------------------------------------------
+			
+				// Create data frame
+				msg = osMemoryPoolAlloc(memPool,osWaitForever);
+				uint8_t strLength = strlen(queueAllMsg.anyPtr);
+				char * str = queueAllMsg.anyPtr;
+				msg[0] = (gTokenInterface.myAddress << 3) | (queueAllMsg.sapi);
+				msg[1] = (queueAllMsg.addr << 3) | queueAllMsg.sapi;
+				msg[2] = strLength;
+				strcpy((char*)msg[3], str);
+				msg[3+strLength] = doChecksum(&msg[3], strLength) << 2;
+				
+				// Create MAC Msg and copy the msg
+				qPtr = msg;
+				queueMsgBuffer.anyPtr = qPtr;
+			
+				// Free DATA_IND
+				osMemoryPoolFree(memPool,msg);
+			
+				// Put on buffer
 				queueMsgBuffer.type = TO_BUFF;
-				queueMsgBuffer.anyPtr = queueAllMsg.anyPtr;
+				queueMsgBuffer.anyPtr = queueMsgBuffer.anyPtr;
 				retCode = osMessageQueuePut(
 						queue_macSBuffer_id,
 						&queueMsgBuffer,

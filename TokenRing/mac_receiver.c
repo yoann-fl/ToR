@@ -49,7 +49,7 @@ void MacReceiver(void *argument)
             //------------------------------------------------------------------------
             // QUEUE SEND    (send received frame to Mac Sender)
             //------------------------------------------------------------------------
-            queueMsg.type = DATABACK;
+            queueMsg.type = TOKEN;
             queueMsg.anyPtr = qPtr;
             retCode = osMessageQueuePut(
                     queue_macS_id,
