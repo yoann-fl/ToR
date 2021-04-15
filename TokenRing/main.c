@@ -291,12 +291,11 @@ void CheckRetCode(uint32_t retCode,uint32_t lineNumber,char * fileName,uint8_t m
 // data is the ptr on the parameter length of the data frame
 ///////////////////////////////////////////////////////////////////////////////////////
 uint8_t doChecksum(uint8_t* data, uint32_t length){
-    uint32_t sum;
+    uint8_t sum;
     sum = 0;
     for(int i = 0; i<length;i++){
         sum = sum + data[i];
     }
-    sum = (sum&0x3F)>>2;
     return sum;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
