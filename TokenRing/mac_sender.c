@@ -23,10 +23,8 @@ void MacSender(void *argument)
 	struct queueMsg_t msgList;					// queue meesage list to LCD
 	struct queueMsg_t msgDelete;				// Delete old message when buffer is full
 	uint8_t dataFrameLength;
-	uint8_t tokenFrameBuffer[17];				// Token frame buffer
-	uint8_t * originalMsg;
+	uint8_t * originalMsg = 0;
 	uint8_t * msg;
-	uint8_t * msgCpy = 0;
 	uint8_t * qPtr;
 	uint8_t * tPtr = 0;
 	size_t	size;
@@ -50,14 +48,21 @@ void MacSender(void *argument)
 		switch(queueAllMsg.type)
 		{
 			case NEW_TOKEN:
-				tokenFrameBuffer[0] = TOKEN_TAG;
+				
+				// Memory Alloc
+				msg = osMemoryPoolAlloc(memPool,osWaitForever);
 			
+				// Create data frame
+				
+				msg[0] = TOKEN_TAG;
+				
 				// Init ready list
 				for(int i = 1; i < 16; i++)
 				{
-					tokenFrameBuffer[i] = 0;
+					msg[i] = 0;
 				}
-				queueAllMsg.anyPtr = tokenFrameBuffer;
+			
+				queueAllMsg.anyPtr = msg;
 				queueAllMsg.type = TO_PHY;
 				//--------------------------------------------------------------------------
 				// QUEUE SEND	(send message to physical sender)
@@ -138,11 +143,13 @@ void MacSender(void *argument)
 				else
 				{
 					tPtr = queueAllMsg.anyPtr;		// Save token pointer
-					originalMsg = qPtr;
+					
 					// Memory Alloc
-					msgCpy = osMemoryPoolAlloc(memPool, osWaitForever);
-					memcpy(msgCpy, qPtr, 4+qPtr[2]);
-					queueMsgBuffer.anyPtr = msgCpy;
+					originalMsg = osMemoryPoolAlloc(memPool, osWaitForever);
+					memcpy(originalMsg, qPtr, 4+qPtr[2]);
+					
+
+					queueMsgBuffer.anyPtr = qPtr;
 					//------------------------------------------------------------------------
 					// QUEUE SEND	-- send the message to phy
 					//------------------------------------------------------------------------
@@ -167,7 +174,7 @@ void MacSender(void *argument)
 					if(qPtr[3+dataFrameLength] & 1 == 1)
 					{
 						// Free message
-						retCode = osMemoryPoolFree(memPool, msgCpy);
+						retCode = osMemoryPoolFree(memPool, originalMsg);
 						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
 						
 						// Free DATABACK
@@ -189,9 +196,7 @@ void MacSender(void *argument)
 					}
 					else	// R = 1, A = 0
 					{
-						// Free message
-						retCode = osMemoryPoolFree(memPool, msgCpy);
-						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+
 						
 						// Free DATABACK
 						retCode = osMemoryPoolFree(memPool, qPtr);
@@ -199,7 +204,7 @@ void MacSender(void *argument)
 						
 						// Alloc Memory
 						queueAllMsg.anyPtr = osMemoryPoolAlloc(memPool, osWaitForever);
-						memcpy(queueAllMsg.anyPtr, msgCpy, 4+qPtr[2]);
+						memcpy(queueAllMsg.anyPtr, originalMsg, 4+qPtr[2]);
 						
 						// Set R & A to 0
 						uint8_t newStatus = qPtr[3+dataFrameLength] & 0xFC;						
@@ -233,6 +238,10 @@ void MacSender(void *argument)
 					// Create Error Message
 					queueAllMsg.addr = qPtr[1] >> 3;
 					queueAllMsg.type = MAC_ERROR;
+					
+					// Free original MSG
+					retCode = osMemoryPoolFree(memPool, originalMsg);
+					CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
 					
 					// Free DATABACK
 					retCode = osMemoryPoolFree(memPool,qPtr);
