@@ -21,6 +21,7 @@ void MacSender(void *argument)
 	struct queueMsg_t queueAllMsg;			// queue message token
 	struct queueMsg_t queueMsgBuffer;		// queue message storage
 	struct queueMsg_t msgList;					// queue meesage list to LCD
+	struct queueMsg_t msgDelete;				// Delete old message when buffer is full
 	uint8_t dataFrameLength;
 	uint8_t tokenFrameBuffer[17];				// Token frame buffer
 	uint8_t * originalMsg;
@@ -217,14 +218,14 @@ void MacSender(void *argument)
 						// QUEUE SEND	-- send the token again
 						//------------------------------------------------------------------------
 
-						queueAllMsg.anyPtr = tPtr;
+						/*queueAllMsg.anyPtr = tPtr;
 						queueAllMsg.type = TO_PHY;
 						retCode = osMessageQueuePut(
 							queue_phyS_id,
 							&queueAllMsg,
 							osPriorityNormal,
 							osWaitForever);
-						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);*/
 					}
 				}
 				else // R = 0, A = 0
@@ -236,7 +237,7 @@ void MacSender(void *argument)
 					// Free DATABACK
 					retCode = osMemoryPoolFree(memPool,qPtr);
 					CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
-					sprintf((char*)msg, "Error in MAC Layer : Message was not read by the station : %d", queueAllMsg.addr+1);
+					sprintf((char*)msg, "Error in MAC Layer : Message was not read by the station : %d \n", queueAllMsg.addr+1);
 					
 					// Send Error to LCD
 					queueAllMsg.anyPtr = msg;
@@ -280,7 +281,10 @@ void MacSender(void *argument)
 				// Free DATA_IND
 				retCode = osMemoryPoolFree(memPool,queueAllMsg.anyPtr);
 			
-				// Put on buffer
+				// Check space avalable on the buffer to avoid errors
+				if(osMessageQueueGetSpace(queue_macSBuffer_id) > 0)
+				{
+					// Put on buffer
 				queueMsgBuffer.type = TO_BUFF;
 				queueMsgBuffer.anyPtr = msg;
 				retCode = osMessageQueuePut(
@@ -289,6 +293,16 @@ void MacSender(void *argument)
 						osPriorityNormal,
 						0);
 				CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+				}
+				else
+				{
+					retCode = osMessageQueueGet( 	
+					queue_macSBuffer_id,
+					&msgDelete,
+					NULL,
+					0); 					
+				}
+				
 				break;
 			default:
 				break;
