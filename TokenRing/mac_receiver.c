@@ -60,29 +60,27 @@ void MacReceiver(void *argument)
             sapiDest = qPtr[1] & 7; //binary to keep only the 3 LSB which define the SAPI
             addressDest = (qPtr[1] & 120) >> 3; //binary to keep the address bits
             dataLength = qPtr[2];
-            if(addressDest == gTokenInterface.myAddress){
+            if((addressDest == gTokenInterface.myAddress)||(addressDest==15)){
               if((qPtr[3+dataLength]&0xFC)>>2 == (doChecksum(qPtr,qPtr[2]+3) & 0x3F))
 							{	
 								qPtr[3+dataLength] = qPtr[3+dataLength]|3;	//ack bit = 1	read bit = 1
 								
-								if(addressSource == gTokenInterface.myAddress){
-									//send DataBack
+								//send to Phy Sender
 								//------------------------------------------------------------------------
                 // QUEUE PHYs SEND    (send ptr on received frame to MAC Sender)
                 //------------------------------------------------------------------------
-                queueMsg.type = DATABACK;
+                queueMsg.type = TO_PHY;
                 queueMsg.anyPtr = qPtr;
                 queueMsg.sapi = sapiSource;
                 queueMsg.sapi = addressSource;
                 retCode = osMessageQueuePut(
-                        queue_macS_id,
+                        queue_phyS_id,
                         &queueMsg,
                         osPriorityNormal,
                         0);
-                CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);        
-                //----------------------------------------------------------------------------  
-								}
-								else{
+                CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);  
+								
+								// VERIFY IF IS FOR CHAT OR TIME WITH DEST SAPI
 								//------------------------------------------------------------------------
 								// QUEUE CHATr & TIMEr SEND    
 								//------------------------------------------------------------------------
@@ -101,9 +99,7 @@ void MacReceiver(void *argument)
 												&queueMsg,
 												osPriorityNormal,
 												0);
-								CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);        
-								//-------------------------------------------------------------------------
-								}
+								CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);    									 
 							}
 							else
 							{ //checksum is wrong
