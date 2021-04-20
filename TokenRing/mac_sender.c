@@ -97,11 +97,11 @@ void MacSender(void *argument)
 				}
 				if(gTokenInterface.connected == TRUE)
 				{
-					qPtr[MYADDRESS] = 10;		// Chat and time are ON
+					qPtr[MYADDRESS+1] = 10;		// Chat and time are ON
 				}
 				else
 				{
-					qPtr[MYADDRESS] = 8;		// Chat OFF and time ON
+					qPtr[MYADDRESS+1] = 8;		// Chat OFF and time ON
 				}
 				gTokenInterface.station_list[MYADDRESS] = qPtr[MYADDRESS+1];
 				
@@ -148,12 +148,11 @@ void MacSender(void *argument)
 					originalMsg = osMemoryPoolAlloc(memPool, osWaitForever);
 					memcpy(originalMsg, qPtr, 4+qPtr[2]);
 					
-
+					queueMsgBuffer.type = TO_PHY;
 					queueMsgBuffer.anyPtr = qPtr;
 					//------------------------------------------------------------------------
 					// QUEUE SEND	-- send the message to phy
 					//------------------------------------------------------------------------
-					queueMsgBuffer.type = TO_PHY;
 					
 					retCode = osMessageQueuePut(
 						queue_phyS_id,
@@ -196,8 +195,6 @@ void MacSender(void *argument)
 					}
 					else	// R = 1, A = 0
 					{
-
-						
 						// Free DATABACK
 						retCode = osMemoryPoolFree(memPool, qPtr);
 						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
@@ -219,18 +216,6 @@ void MacSender(void *argument)
 							osWaitForever);
 						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
 						
-						//------------------------------------------------------------------------
-						// QUEUE SEND	-- send the token again
-						//------------------------------------------------------------------------
-
-						/*queueAllMsg.anyPtr = tPtr;
-						queueAllMsg.type = TO_PHY;
-						retCode = osMessageQueuePut(
-							queue_phyS_id,
-							&queueAllMsg,
-							osPriorityNormal,
-							osWaitForever);
-						CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);*/
 					}
 				}
 				else // R = 0, A = 0
@@ -246,6 +231,8 @@ void MacSender(void *argument)
 					// Free DATABACK
 					retCode = osMemoryPoolFree(memPool,qPtr);
 					CheckRetCode(retCode,__LINE__,__FILE__,CONTINUE);
+					
+					msg = osMemoryPoolAlloc(memPool,osWaitForever);		
 					sprintf((char*)msg, "Error in MAC Layer : Message was not read by the station : %d \n", queueAllMsg.addr+1);
 					
 					// Send Error to LCD
@@ -294,7 +281,7 @@ void MacSender(void *argument)
 				if(osMessageQueueGetSpace(queue_macSBuffer_id) > 0)
 				{
 					// Put on buffer
-				queueMsgBuffer.type = TO_BUFF;
+				queueMsgBuffer.type = TO_PHY;
 				queueMsgBuffer.anyPtr = msg;
 				retCode = osMessageQueuePut(
 						queue_macSBuffer_id,
